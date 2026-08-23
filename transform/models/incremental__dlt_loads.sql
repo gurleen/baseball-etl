@@ -1,8 +1,6 @@
 MODEL (
   name raw_sqlmesh.incremental__dlt_loads,
-  kind INCREMENTAL_BY_TIME_RANGE (
-    time_column _dlt_load_time,
-  ),
+  kind FULL,
 );
 
 SELECT
@@ -14,5 +12,3 @@ SELECT
   TO_TIMESTAMP(CAST(c.load_id AS DOUBLE PRECISION)) as _dlt_load_time
 FROM
   raw._dlt_loads as c
-WHERE
-  TO_TIMESTAMP(CAST(c.load_id AS DOUBLE PRECISION)) BETWEEN @start_ts AND @end_ts

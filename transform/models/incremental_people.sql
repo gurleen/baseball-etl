@@ -1,8 +1,6 @@
 MODEL (
   name raw_sqlmesh.incremental_people,
-  kind INCREMENTAL_BY_TIME_RANGE (
-    time_column _dlt_load_time,
-  ),
+  kind FULL,
   grain (key_person),
 );
 
@@ -52,5 +50,3 @@ SELECT
   TO_TIMESTAMP(CAST(c._dlt_load_id AS DOUBLE PRECISION)) as _dlt_load_time
 FROM
   raw.people as c
-WHERE
-  TO_TIMESTAMP(CAST(c._dlt_load_id AS DOUBLE PRECISION)) BETWEEN @start_ts AND @end_ts

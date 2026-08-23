@@ -41,10 +41,11 @@ def _fetch_game_pks(
     end_date: Optional[str],
 ) -> Iterator[int]:
     params = {"sportId": 1, "season": season, "gameType": game_types}
-    if start_date:
-        params["startDate"] = start_date
-    if end_date:
-        params["endDate"] = end_date
+    # The schedule endpoint 400s if startDate/endDate is given without the
+    # other, so fill in the missing bound from the season's calendar year.
+    if start_date or end_date:
+        params["startDate"] = start_date or f"{season}-01-01"
+        params["endDate"] = end_date or f"{season}-12-31"
     response = requests.get(SCHEDULE_URL, params=params, timeout=60)
     response.raise_for_status()
     for date in response.json().get("dates", []):

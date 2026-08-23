@@ -1,6 +1,10 @@
 import argparse
 
-from baseball_etl.pipeline import run_chadwick_register, run_retrosheet_playbyplay
+from baseball_etl.pipeline import (
+    run_chadwick_register,
+    run_mlb_playbyplay,
+    run_retrosheet_playbyplay,
+)
 
 
 def parse_years(spec: str) -> list[int]:
@@ -35,12 +39,46 @@ def main() -> None:
         help='Year or years to load, e.g. "2023", "2019-2023", or "2015-2017,2020"',
     )
 
+    mlb_parser = subparsers.add_parser(
+        "mlb-playbyplay",
+        help="Load current-season MLB play-by-play data from the MLBAM/GUMBO live feed API",
+    )
+    mlb_parser.add_argument(
+        "--season",
+        type=int,
+        default=None,
+        help="Season to load, e.g. 2026. Defaults to the current calendar year.",
+    )
+    mlb_parser.add_argument(
+        "--game-types",
+        default="R",
+        help='MLB game type code(s), e.g. "R" for regular season or "F,D,L,W" '
+        'for postseason rounds. Defaults to "R".',
+    )
+    mlb_parser.add_argument(
+        "--start-date",
+        default=None,
+        help="Only load games on/after this date (YYYY-MM-DD).",
+    )
+    mlb_parser.add_argument(
+        "--end-date",
+        default=None,
+        help="Only load games on/before this date (YYYY-MM-DD).",
+    )
+
     args = parser.parse_args()
 
     if args.pipeline == "chadwick-register":
         run_chadwick_register()
     elif args.pipeline == "retrosheet-playbyplay":
         run_retrosheet_playbyplay(parse_years(args.years))
+    elif args.pipeline == "mlb-playbyplay":
+        run_mlb_playbyplay(
+            season=args.season,
+            game_types=args.game_types,
+            start_date=args.start_date,
+            end_date=args.end_date,
+        )
 
 
 if __name__ == "__main__":

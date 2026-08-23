@@ -7,6 +7,7 @@ import dlt
 from dotenv import load_dotenv
 
 from baseball_etl.sources.chadwick_register import chadwick_register
+from baseball_etl.sources.mlb_playbyplay import mlb_playbyplay
 from baseball_etl.sources.retrosheet_playbyplay import retrosheet_playbyplay
 
 load_dotenv()
@@ -33,4 +34,22 @@ def run_chadwick_register() -> None:
 def run_retrosheet_playbyplay(years: Iterable[int]) -> None:
     pipeline = _pipeline("retrosheet_playbyplay")
     load_info = pipeline.run(retrosheet_playbyplay(years))
+    print(load_info)
+
+
+def run_mlb_playbyplay(
+    season: int | None = None,
+    game_types: str = "R",
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> None:
+    pipeline = _pipeline("mlb_playbyplay")
+    load_info = pipeline.run(
+        mlb_playbyplay(
+            season=season,
+            game_types=game_types,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
     print(load_info)

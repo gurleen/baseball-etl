@@ -1,0 +1,42 @@
+name: Load Retrosheet play-by-play
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: 'Year(s) to load, e.g. "2023", "2019-2023", or "2015-2017,2020"'
+        required: true
+        type: string
+      database_url:
+        description: >-
+          Postgres URL to load into. Optional — defaults to the DATABASE_URL
+          repo secret. NOTE: unlike a secret, a value typed here is visible in
+          plain text in this run's Actions UI, so prefer leaving it blank and
+          using the secret unless you specifically need to target a different
+          database for this run.
+        required: false
+        type: string
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Load play-by-play data
+        env:
+          DATABASE_URL: ${{ inputs.database_url || secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "No database_url input and no DATABASE_URL secret set." >&2
+            exit 1
+          fi
+          echo "::add-mask::$DATABASE_URL"
+          uv run main.py retrosheet-playbyplay --years "${{ inputs.years }}"

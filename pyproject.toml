@@ -1,0 +1,11 @@
+[project]
+name = "baseball-etl"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dlt[postgres]>=1.30.0",
+    "python-dotenv>=1.2.3",
+    "requests>=2.34.2",
+]

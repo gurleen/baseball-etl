@@ -6,3 +6,6 @@ __pycache__/
 *.duckdb
 *.duckdb.wal
 .data/
+transform/logs/
+transform/.cache/
+logs/

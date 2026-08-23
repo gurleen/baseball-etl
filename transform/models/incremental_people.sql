@@ -1,0 +1,56 @@
+MODEL (
+  name raw_sqlmesh.incremental_people,
+  kind INCREMENTAL_BY_TIME_RANGE (
+    time_column _dlt_load_time,
+  ),
+  grain (key_person),
+);
+
+SELECT
+  CAST(c.key_person AS TEXT) AS key_person,
+  CAST(c.key_uuid AS TEXT) AS key_uuid,
+  CAST(c.key_mlbam AS TEXT) AS key_mlbam,
+  CAST(c.key_retro AS TEXT) AS key_retro,
+  CAST(c.key_bbref AS TEXT) AS key_bbref,
+  CAST(c.key_bbref_minors AS TEXT) AS key_bbref_minors,
+  CAST(c.key_fangraphs AS TEXT) AS key_fangraphs,
+  CAST(c.key_npb AS TEXT) AS key_npb,
+  CAST(c.key_sr_nfl AS TEXT) AS key_sr_nfl,
+  CAST(c.key_sr_nba AS TEXT) AS key_sr_nba,
+  CAST(c.key_sr_nhl AS TEXT) AS key_sr_nhl,
+  CAST(c.key_wikidata AS TEXT) AS key_wikidata,
+  CAST(c.name_last AS TEXT) AS name_last,
+  CAST(c.name_first AS TEXT) AS name_first,
+  CAST(c.name_given AS TEXT) AS name_given,
+  CAST(c.name_suffix AS TEXT) AS name_suffix,
+  CAST(c.name_matrilineal AS TEXT) AS name_matrilineal,
+  CAST(c.name_nick AS TEXT) AS name_nick,
+  CAST(c.birth_year AS TEXT) AS birth_year,
+  CAST(c.birth_month AS TEXT) AS birth_month,
+  CAST(c.birth_day AS TEXT) AS birth_day,
+  CAST(c.death_year AS TEXT) AS death_year,
+  CAST(c.death_month AS TEXT) AS death_month,
+  CAST(c.death_day AS TEXT) AS death_day,
+  CAST(c.pro_played_first AS TEXT) AS pro_played_first,
+  CAST(c.pro_played_last AS TEXT) AS pro_played_last,
+  CAST(c.mlb_played_first AS TEXT) AS mlb_played_first,
+  CAST(c.mlb_played_last AS TEXT) AS mlb_played_last,
+  CAST(c.col_played_first AS TEXT) AS col_played_first,
+  CAST(c.col_played_last AS TEXT) AS col_played_last,
+  CAST(c.pro_managed_first AS TEXT) AS pro_managed_first,
+  CAST(c.pro_managed_last AS TEXT) AS pro_managed_last,
+  CAST(c.mlb_managed_first AS TEXT) AS mlb_managed_first,
+  CAST(c.mlb_managed_last AS TEXT) AS mlb_managed_last,
+  CAST(c.col_managed_first AS TEXT) AS col_managed_first,
+  CAST(c.col_managed_last AS TEXT) AS col_managed_last,
+  CAST(c.pro_umpired_first AS TEXT) AS pro_umpired_first,
+  CAST(c.pro_umpired_last AS TEXT) AS pro_umpired_last,
+  CAST(c.mlb_umpired_first AS TEXT) AS mlb_umpired_first,
+  CAST(c.mlb_umpired_last AS TEXT) AS mlb_umpired_last,
+  CAST(c._dlt_load_id AS TEXT) AS _dlt_load_id,
+  CAST(c._dlt_id AS TEXT) AS _dlt_id,
+  TO_TIMESTAMP(CAST(c._dlt_load_id AS DOUBLE PRECISION)) as _dlt_load_time
+FROM
+  raw.people as c
+WHERE
+  TO_TIMESTAMP(CAST(c._dlt_load_id AS DOUBLE PRECISION)) BETWEEN @start_ts AND @end_ts

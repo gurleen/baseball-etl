@@ -9,3 +9,9 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "requests>=2.34.2",
 ]
+
+[dependency-groups]
+dev = [
+    "psycopg2-binary>=2.9.12",
+    "sqlmesh>=0.236.1",
+]

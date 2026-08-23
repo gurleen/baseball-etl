@@ -5,10 +5,10 @@ MODEL (
 );
 
 SELECT
-  HASHTEXTEXTENDED(key_person, 0) AS pk,
+  -- pk is the MLBAM id itself (int-typed); rows without one are filtered out below
+  NULLIF(key_mlbam, '')::BIGINT AS pk,
   key_person AS person_id,
   key_uuid::UUID AS uuid,
-  key_mlbam AS mlbam_id,
   key_retro AS retro_id,
   key_bbref AS bbref_id,
   key_bbref_minors AS bbref_minors_id,
@@ -36,3 +36,4 @@ SELECT
   NULLIF(mlb_played_last, '')::SMALLINT AS mlb_last_season
 FROM raw_sqlmesh.incremental_people
 WHERE NULLIF(mlb_played_first, '') IS NOT NULL
+  AND NULLIF(key_mlbam, '') IS NOT NULL

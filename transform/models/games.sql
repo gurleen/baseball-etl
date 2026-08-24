@@ -1,9 +1,15 @@
 MODEL (
   name public.games,
-  kind FULL,
+  kind INCREMENTAL_BY_UNIQUE_KEY (
+    unique_key pk
+  ),
   grain (pk),
 );
 
+-- Only the current season's games actually change (scores/status update
+-- during the day, schedule gets corrected); every prior season is
+-- immutable, so an unbounded FULL refresh here would just re-scan and
+-- rewrite years of settled data on every run for no reason.
 SELECT
   game_pk AS pk,
   game_guid,
@@ -29,3 +35,4 @@ SELECT
   status__coded_game_state AS coded_game_state,
   status__detailed_state AS detailed_state
 FROM raw.games
+WHERE season::SMALLINT = EXTRACT(YEAR FROM CURRENT_DATE)::SMALLINT

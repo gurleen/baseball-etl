@@ -1,8 +1,6 @@
 MODEL (
   name public.plays,
-  kind INCREMENTAL_BY_UNIQUE_KEY (
-    unique_key pk
-  ),
+  kind FULL,
   grain (pk),
 );
 
@@ -137,4 +135,3 @@ SELECT
   rbi,
   is_scoring_play
 FROM unioned
-WHERE season = EXTRACT(YEAR FROM CURRENT_DATE)::SMALLINT

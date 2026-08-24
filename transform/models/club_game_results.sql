@@ -1,8 +1,6 @@
 MODEL (
   name public.club_game_results,
-  kind INCREMENTAL_BY_UNIQUE_KEY (
-    unique_key (game_pk, club_pk)
-  ),
+  kind FULL,
   grain (game_pk, club_pk),
 );
 
@@ -16,7 +14,6 @@ SELECT
   TRUE AS is_home,
   home_is_winner AS did_win
 FROM public.games
-WHERE season = EXTRACT(YEAR FROM CURRENT_DATE)::SMALLINT
 
 UNION ALL
 
@@ -30,4 +27,3 @@ SELECT
   FALSE AS is_home,
   away_is_winner AS did_win
 FROM public.games
-WHERE season = EXTRACT(YEAR FROM CURRENT_DATE)::SMALLINT

@@ -1,10 +1,12 @@
 """Entry points for loading source data into Postgres."""
 
 import os
+import time
 from typing import Iterable
 
 import dlt
 from dotenv import load_dotenv
+from loguru import logger
 
 from baseball_etl.sources.chadwick_register import chadwick_register
 from baseball_etl.sources.mlb_divisions import mlb_divisions
@@ -97,6 +99,14 @@ def run_mlb_playbyplay(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> None:
+    logger.info(
+        "Starting mlb_playbyplay run: season={} game_types={} start_date={} end_date={}",
+        season,
+        game_types,
+        start_date,
+        end_date,
+    )
+    started = time.monotonic()
     pipeline = _pipeline("mlb_playbyplay")
     load_info = pipeline.run(
         mlb_playbyplay(
@@ -106,4 +116,6 @@ def run_mlb_playbyplay(
             end_date=end_date,
         )
     )
+    elapsed = time.monotonic() - started
+    logger.info("mlb_playbyplay run finished in {:.1f}s", elapsed)
     print(load_info)

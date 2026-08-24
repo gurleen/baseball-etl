@@ -25,6 +25,7 @@ from typing import Iterator, Optional
 
 import dlt
 import requests
+from loguru import logger
 
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 LIVE_FEED_URL = "https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
@@ -46,18 +47,31 @@ def _fetch_game_pks(
     if start_date or end_date:
         params["startDate"] = start_date or f"{season}-01-01"
         params["endDate"] = end_date or f"{season}-12-31"
+    logger.info(
+        "Fetching schedule: season={} game_types={} start_date={} end_date={}",
+        season,
+        game_types,
+        params.get("startDate", "(unbounded)"),
+        params.get("endDate", "(unbounded)"),
+    )
     response = requests.get(SCHEDULE_URL, params=params, timeout=60)
     response.raise_for_status()
-    for date in response.json().get("dates", []):
-        for game in date.get("games", []):
-            yield game["gamePk"]
+    game_pks = [
+        game["gamePk"]
+        for date in response.json().get("dates", [])
+        for game in date.get("games", [])
+    ]
+    logger.info("Schedule returned {} games", len(game_pks))
+    yield from game_pks
 
 
 def _fetch_game_plays(game_pk: int) -> Iterator[dict]:
     response = requests.get(LIVE_FEED_URL.format(game_pk=game_pk), timeout=120)
     response.raise_for_status()
     payload = response.json()
-    for play in payload.get("liveData", {}).get("plays", {}).get("allPlays", []):
+    plays = payload.get("liveData", {}).get("plays", {}).get("allPlays", [])
+    logger.debug("game_pk={} yielded {} plays", game_pk, len(plays))
+    for play in plays:
         play["game_pk"] = game_pk
         play["at_bat_index"] = play.get("about", {}).get("atBatIndex")
         yield play
@@ -83,7 +97,21 @@ def mlb_playbyplay(
         name="mlb_plays", write_disposition="merge", primary_key=["game_pk", "at_bat_index"]
     )
     def mlb_plays() -> Iterator[dict]:
+        games_processed = 0
+        plays_yielded = 0
         for game_pk in _fetch_game_pks(resolved_season, game_types, start_date, end_date):
-            yield from _fetch_game_plays(game_pk)
+            for play in _fetch_game_plays(game_pk):
+                plays_yielded += 1
+                yield play
+            games_processed += 1
+            if games_processed % 50 == 0:
+                logger.info(
+                    "Progress: {} games processed, {} plays yielded so far",
+                    games_processed,
+                    plays_yielded,
+                )
+        logger.info(
+            "Done: {} games processed, {} plays yielded", games_processed, plays_yielded
+        )
 
     return mlb_plays

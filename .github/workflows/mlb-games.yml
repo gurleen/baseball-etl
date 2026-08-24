@@ -1,0 +1,75 @@
+name: Load MLB games
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Season to load, e.g. 2026. Defaults to the current calendar year."
+        required: false
+        type: string
+      game_types:
+        description: >-
+          MLB game type code(s), e.g. "R" for regular season or "F,D,L,W" for
+          postseason rounds.
+        required: false
+        type: string
+        default: "R"
+      start_date:
+        description: "Only load games on/after this date (YYYY-MM-DD). Optional."
+        required: false
+        type: string
+      end_date:
+        description: "Only load games on/before this date (YYYY-MM-DD). Optional."
+        required: false
+        type: string
+      database_url:
+        description: >-
+          Postgres URL to load into. Optional — defaults to the DATABASE_URL
+          repo secret. NOTE: unlike a secret, a value typed here is visible in
+          plain text in this run's Actions UI, so prefer leaving it blank and
+          using the secret unless you specifically need to target a different
+          database for this run.
+        required: false
+        type: string
+  schedule:
+    # Daily during the MLB season, picking up the previous day's finalized
+    # games plus any updates to in-progress ones.
+    - cron: "0 12 * 3-11 *"
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Load games data
+        env:
+          DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+          SEASON: ${{ github.event.inputs.season }}
+          GAME_TYPES: ${{ github.event.inputs.game_types || 'R' }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "No database_url input and no DATABASE_URL secret set." >&2
+            exit 1
+          fi
+          echo "::add-mask::$DATABASE_URL"
+          args=(mlb-games --game-types "$GAME_TYPES")
+          if [ -n "$SEASON" ]; then
+            args+=(--season "$SEASON")
+          fi
+          if [ -n "$START_DATE" ]; then
+            args+=(--start-date "$START_DATE")
+          fi
+          if [ -n "$END_DATE" ]; then
+            args+=(--end-date "$END_DATE")
+          fi
+          uv run main.py "${args[@]}"

@@ -2,7 +2,13 @@ import argparse
 
 from baseball_etl.pipeline import (
     run_chadwick_register,
+    run_mlb_divisions,
+    run_mlb_games,
+    run_mlb_leagues,
     run_mlb_playbyplay,
+    run_mlb_sports,
+    run_mlb_teams,
+    run_mlb_venues,
     run_retrosheet_playbyplay,
 )
 
@@ -66,6 +72,81 @@ def main() -> None:
         help="Only load games on/before this date (YYYY-MM-DD).",
     )
 
+    mlb_games_parser = subparsers.add_parser(
+        "mlb-games",
+        help="Load MLB schedule/game data (teams, score, venue, status) from the MLB Stats API",
+    )
+    mlb_games_parser.add_argument(
+        "--season",
+        type=int,
+        default=None,
+        help="Season to load, e.g. 2026. Defaults to the current calendar year.",
+    )
+    mlb_games_parser.add_argument(
+        "--game-types",
+        default="R",
+        help='MLB game type code(s), e.g. "R" for regular season or "F,D,L,W" '
+        'for postseason rounds. Defaults to "R".',
+    )
+    mlb_games_parser.add_argument(
+        "--start-date",
+        default=None,
+        help="Only load games on/after this date (YYYY-MM-DD).",
+    )
+    mlb_games_parser.add_argument(
+        "--end-date",
+        default=None,
+        help="Only load games on/before this date (YYYY-MM-DD).",
+    )
+
+    mlb_teams_parser = subparsers.add_parser(
+        "mlb-teams",
+        help="Load MLB team reference data (name, venue, division) from the MLB Stats API",
+    )
+    mlb_teams_parser.add_argument(
+        "--seasons",
+        default=None,
+        help='Season or seasons to load, e.g. "2025", "1901-2025", or '
+        '"2015-2017,2020". Defaults to the current calendar year.',
+    )
+
+    subparsers.add_parser(
+        "mlb-sports", help="Load MLB Stats API's sports reference list (MLB, AAA, AA, etc.)"
+    )
+
+    mlb_leagues_parser = subparsers.add_parser(
+        "mlb-leagues",
+        help="Load MLB league reference data (American League, National League) from the MLB Stats API",
+    )
+    mlb_leagues_parser.add_argument(
+        "--seasons",
+        default=None,
+        help='Season or seasons to load, e.g. "2025", "1901-2025", or '
+        '"2015-2017,2020". Defaults to the current calendar year.',
+    )
+
+    mlb_divisions_parser = subparsers.add_parser(
+        "mlb-divisions",
+        help="Load MLB division reference data (AL West, NL East, etc.) from the MLB Stats API",
+    )
+    mlb_divisions_parser.add_argument(
+        "--seasons",
+        default=None,
+        help='Season or seasons to load, e.g. "2025", "1901-2025", or '
+        '"2015-2017,2020". Defaults to the current calendar year.',
+    )
+
+    mlb_venues_parser = subparsers.add_parser(
+        "mlb-venues",
+        help="Load MLB venue reference data (ballparks) from the MLB Stats API",
+    )
+    mlb_venues_parser.add_argument(
+        "--seasons",
+        default=None,
+        help='Season or seasons to load, e.g. "2025", "1901-2025", or '
+        '"2015-2017,2020". Defaults to the current calendar year.',
+    )
+
     args = parser.parse_args()
 
     if args.pipeline == "chadwick-register":
@@ -79,6 +160,23 @@ def main() -> None:
             start_date=args.start_date,
             end_date=args.end_date,
         )
+    elif args.pipeline == "mlb-games":
+        run_mlb_games(
+            season=args.season,
+            game_types=args.game_types,
+            start_date=args.start_date,
+            end_date=args.end_date,
+        )
+    elif args.pipeline == "mlb-teams":
+        run_mlb_teams(parse_years(args.seasons) if args.seasons else None)
+    elif args.pipeline == "mlb-sports":
+        run_mlb_sports()
+    elif args.pipeline == "mlb-leagues":
+        run_mlb_leagues(parse_years(args.seasons) if args.seasons else None)
+    elif args.pipeline == "mlb-divisions":
+        run_mlb_divisions(parse_years(args.seasons) if args.seasons else None)
+    elif args.pipeline == "mlb-venues":
+        run_mlb_venues(parse_years(args.seasons) if args.seasons else None)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,53 @@
+name: Load MLB venues
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: >-
+          Season or seasons to load, e.g. "2025", "1901-2025", or
+          "2015-2017,2020". Defaults to the current calendar year.
+        required: false
+        type: string
+      database_url:
+        description: >-
+          Postgres URL to load into. Optional — defaults to the DATABASE_URL
+          repo secret. NOTE: unlike a secret, a value typed here is visible in
+          plain text in this run's Actions UI, so prefer leaving it blank and
+          using the secret unless you specifically need to target a different
+          database for this run.
+        required: false
+        type: string
+  schedule:
+    # Venue reference data (new ballparks) rarely changes mid-season, so a
+    # monthly check for the current season is enough to catch it.
+    - cron: "0 12 1 * *"
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Load venues data
+        env:
+          DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+          SEASONS: ${{ github.event.inputs.seasons }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "No database_url input and no DATABASE_URL secret set." >&2
+            exit 1
+          fi
+          echo "::add-mask::$DATABASE_URL"
+          args=(mlb-venues)
+          if [ -n "$SEASONS" ]; then
+            args+=(--seasons "$SEASONS")
+          fi
+          uv run main.py "${args[@]}"

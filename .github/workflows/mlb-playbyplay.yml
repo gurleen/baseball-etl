@@ -78,3 +78,10 @@ jobs:
           fi
           echo "Loading play-by-play data from $START_DATE"
           uv run main.py "${args[@]}"
+
+      - name: Run SQLMesh models
+        env:
+          DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+        run: |
+          echo "::add-mask::$DATABASE_URL"
+          uv run sqlmesh --paths transform run

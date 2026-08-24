@@ -15,7 +15,9 @@ on:
         type: string
         default: "R"
       start_date:
-        description: "Only load games on/after this date (YYYY-MM-DD). Optional."
+        description: >-
+          Only load games on/after this date (YYYY-MM-DD). Optional —
+          defaults to 7 days before today.
         required: false
         type: string
       end_date:
@@ -32,8 +34,10 @@ on:
         required: false
         type: string
   schedule:
-    # Daily during the MLB season, picking up the previous day's finalized
-    # games plus any updates to in-progress ones.
+    # Daily during the MLB season. Re-fetches a trailing 7-day window (see
+    # START_DATE default below) rather than the whole season, since a merge
+    # write disposition makes re-pulling those days idempotent while still
+    # catching late score/status corrections.
     - cron: "0 12 * 3-11 *"
 
 jobs:
@@ -62,14 +66,15 @@ jobs:
             exit 1
           fi
           echo "::add-mask::$DATABASE_URL"
-          args=(mlb-playbyplay --game-types "$GAME_TYPES")
+          if [ -z "$START_DATE" ]; then
+            START_DATE="$(date -u -d '7 days ago' +%F)"
+          fi
+          args=(mlb-playbyplay --game-types "$GAME_TYPES" --start-date "$START_DATE")
           if [ -n "$SEASON" ]; then
             args+=(--season "$SEASON")
-          fi
-          if [ -n "$START_DATE" ]; then
-            args+=(--start-date "$START_DATE")
           fi
           if [ -n "$END_DATE" ]; then
             args+=(--end-date "$END_DATE")
           fi
+          echo "Loading play-by-play data from $START_DATE"
           uv run main.py "${args[@]}"

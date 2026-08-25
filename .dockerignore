@@ -1,0 +1,11 @@
+.git
+.venv
+.env
+.dlt/secrets.toml
+logs/
+transform/logs/
+transform/.cache/
+*.duckdb
+*.duckdb.wal
+.data/
+.codegraph

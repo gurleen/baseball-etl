@@ -133,5 +133,9 @@ SELECT
   event_category = 'triple_play' AS is_triple_play,
   event_category = 'other_out' AS is_other_out,
   rbi,
-  is_scoring_play
+  is_scoring_play,
+  outs_after - COALESCE(
+    LAG(outs_after) OVER (PARTITION BY source_id, game_id, inning, half_inning ORDER BY play_seq),
+    0
+  ) AS outs_recorded
 FROM unioned

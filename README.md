@@ -11,6 +11,27 @@ uv run main.py retrosheet-playbyplay --years 2019-2023
 uv run main.py mlb-playbyplay --season 2026
 ```
 
+FanGraphs' guts constants (wOBA weights, run values, etc.) can't be scraped —
+FanGraphs blocks scrapers — so instead download the CSV from
+https://www.fangraphs.com/guts.aspx?type=cn, overwrite
+`data/fangraphs_guts.csv`, commit, and either push to `main` (the
+`fangraphs-guts` workflow runs automatically on changes to that file) or load
+it locally:
+
+```sh
+uv run main.py fangraphs-guts
+```
+
+FanGraphs' park factors work the same way — download the CSV from
+https://www.fangraphs.com/guts.aspx?type=pf, overwrite
+`data/fangraphs_park_factors.csv`, commit, and either push to `main` (the
+`fangraphs-park-factors` workflow runs automatically on changes to that file)
+or load it locally:
+
+```sh
+uv run main.py fangraphs-park-factors
+```
+
 ## Transforming with SQLMesh
 
 The `transform/` directory is a [SQLMesh](https://sqlmesh.readthedocs.io/) project that

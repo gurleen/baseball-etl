@@ -1,7 +1,10 @@
 import argparse
+from pathlib import Path
 
 from baseball_etl.pipeline import (
     run_chadwick_register,
+    run_fangraphs_guts,
+    run_fangraphs_park_factors,
     run_mlb_divisions,
     run_mlb_games,
     run_mlb_leagues,
@@ -10,6 +13,7 @@ from baseball_etl.pipeline import (
     run_mlb_teams,
     run_mlb_venues,
     run_retrosheet_playbyplay,
+    run_statcast,
 )
 
 
@@ -33,6 +37,30 @@ def main() -> None:
 
     subparsers.add_parser(
         "chadwick-register", help="Load the Chadwick Bureau register"
+    )
+
+    fangraphs_guts_parser = subparsers.add_parser(
+        "fangraphs-guts",
+        help="Load FanGraphs' guts constants (wOBA weights, run values, etc.) "
+        "from the manually-downloaded CSV committed at data/fangraphs_guts.csv",
+    )
+    fangraphs_guts_parser.add_argument(
+        "--path",
+        type=Path,
+        default=None,
+        help="Path to the guts CSV. Defaults to data/fangraphs_guts.csv.",
+    )
+
+    fangraphs_park_factors_parser = subparsers.add_parser(
+        "fangraphs-park-factors",
+        help="Load FanGraphs' park factors by team/season from the "
+        "manually-downloaded CSV committed at data/fangraphs_park_factors.csv",
+    )
+    fangraphs_park_factors_parser.add_argument(
+        "--path",
+        type=Path,
+        default=None,
+        help="Path to the park factors CSV. Defaults to data/fangraphs_park_factors.csv.",
     )
 
     retrosheet_parser = subparsers.add_parser(
@@ -147,10 +175,48 @@ def main() -> None:
         '"2015-2017,2020". Defaults to the current calendar year.',
     )
 
+    statcast_parser = subparsers.add_parser(
+        "statcast",
+        help="Load Statcast pitch-tracking and batted-ball data from Baseball "
+        "Savant's per-game gamefeed API",
+    )
+    statcast_parser.add_argument(
+        "--season",
+        type=int,
+        default=None,
+        help="Season to load, e.g. 2026. Defaults to the current calendar year.",
+    )
+    statcast_parser.add_argument(
+        "--game-types",
+        default="R",
+        help='MLB game type code(s), e.g. "R" for regular season or "F,D,L,W" '
+        'for postseason rounds. Defaults to "R".',
+    )
+    statcast_parser.add_argument(
+        "--start-date",
+        default=None,
+        help="Only load games on/after this date (YYYY-MM-DD).",
+    )
+    statcast_parser.add_argument(
+        "--end-date",
+        default=None,
+        help="Only load games on/before this date (YYYY-MM-DD).",
+    )
+
     args = parser.parse_args()
 
     if args.pipeline == "chadwick-register":
         run_chadwick_register()
+    elif args.pipeline == "fangraphs-guts":
+        if args.path:
+            run_fangraphs_guts(args.path)
+        else:
+            run_fangraphs_guts()
+    elif args.pipeline == "fangraphs-park-factors":
+        if args.path:
+            run_fangraphs_park_factors(args.path)
+        else:
+            run_fangraphs_park_factors()
     elif args.pipeline == "retrosheet-playbyplay":
         run_retrosheet_playbyplay(parse_years(args.years))
     elif args.pipeline == "mlb-playbyplay":
@@ -177,6 +243,13 @@ def main() -> None:
         run_mlb_divisions(parse_years(args.seasons) if args.seasons else None)
     elif args.pipeline == "mlb-venues":
         run_mlb_venues(parse_years(args.seasons) if args.seasons else None)
+    elif args.pipeline == "statcast":
+        run_statcast(
+            season=args.season,
+            game_types=args.game_types,
+            start_date=args.start_date,
+            end_date=args.end_date,
+        )
 
 
 if __name__ == "__main__":

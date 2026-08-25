@@ -1,0 +1,43 @@
+name: Load FanGraphs park factors
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_url:
+        description: >-
+          Postgres URL to load into. Optional — defaults to the DATABASE_URL
+          repo secret. NOTE: unlike a secret, a value typed here is visible in
+          plain text in this run's Actions UI, so prefer leaving it blank and
+          using the secret unless you specifically need to target a different
+          database for this run.
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - data/fangraphs_park_factors.csv
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Load FanGraphs park factors data
+        env:
+          DATABASE_URL: ${{ github.event.inputs.database_url || secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "No database_url input and no DATABASE_URL secret set." >&2
+            exit 1
+          fi
+          echo "::add-mask::$DATABASE_URL"
+          uv run main.py fangraphs-park-factors

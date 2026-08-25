@@ -2,6 +2,7 @@
 
 import os
 import time
+from pathlib import Path
 from typing import Iterable
 
 import dlt
@@ -9,6 +10,12 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from baseball_etl.sources.chadwick_register import chadwick_register
+from baseball_etl.sources.fangraphs_guts import DEFAULT_PATH as FANGRAPHS_GUTS_DEFAULT_PATH
+from baseball_etl.sources.fangraphs_guts import fangraphs_guts
+from baseball_etl.sources.fangraphs_park_factors import (
+    DEFAULT_PATH as FANGRAPHS_PARK_FACTORS_DEFAULT_PATH,
+)
+from baseball_etl.sources.fangraphs_park_factors import fangraphs_park_factors
 from baseball_etl.sources.mlb_divisions import mlb_divisions
 from baseball_etl.sources.mlb_games import mlb_games
 from baseball_etl.sources.mlb_leagues import mlb_leagues
@@ -17,6 +24,7 @@ from baseball_etl.sources.mlb_sports import mlb_sports
 from baseball_etl.sources.mlb_teams import mlb_teams
 from baseball_etl.sources.mlb_venues import mlb_venues
 from baseball_etl.sources.retrosheet_playbyplay import retrosheet_playbyplay
+from baseball_etl.sources.statcast import statcast
 
 load_dotenv()
 
@@ -36,6 +44,18 @@ def run() -> None:
 def run_chadwick_register() -> None:
     pipeline = _pipeline("chadwick_register")
     load_info = pipeline.run(chadwick_register())
+    print(load_info)
+
+
+def run_fangraphs_guts(path: Path = FANGRAPHS_GUTS_DEFAULT_PATH) -> None:
+    pipeline = _pipeline("fangraphs_guts")
+    load_info = pipeline.run(fangraphs_guts(path))
+    print(load_info)
+
+
+def run_fangraphs_park_factors(path: Path = FANGRAPHS_PARK_FACTORS_DEFAULT_PATH) -> None:
+    pipeline = _pipeline("fangraphs_park_factors")
+    load_info = pipeline.run(fangraphs_park_factors(path))
     print(load_info)
 
 
@@ -118,4 +138,32 @@ def run_mlb_playbyplay(
     )
     elapsed = time.monotonic() - started
     logger.info("mlb_playbyplay run finished in {:.1f}s", elapsed)
+    print(load_info)
+
+
+def run_statcast(
+    season: int | None = None,
+    game_types: str = "R",
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> None:
+    logger.info(
+        "Starting statcast run: season={} game_types={} start_date={} end_date={}",
+        season,
+        game_types,
+        start_date,
+        end_date,
+    )
+    started = time.monotonic()
+    pipeline = _pipeline("statcast")
+    load_info = pipeline.run(
+        statcast(
+            season=season,
+            game_types=game_types,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    elapsed = time.monotonic() - started
+    logger.info("statcast run finished in {:.1f}s", elapsed)
     print(load_info)

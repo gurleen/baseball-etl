@@ -1,7 +1,8 @@
 # Prefect worker image for baseball-etl: a persistent Coolify service running
-# this image polls the "baseball-etl" work pool and executes the scheduled/
-# manual flows in baseball_etl/flows.py (dlt loaders + SQLMesh runs). Needs
-# PREFECT_API_URL and DATABASE_URL set as env vars.
+# this image registers the deployments in prefect.yaml, then polls the
+# "baseball-etl" work pool and executes the scheduled/manual flows in
+# baseball_etl/flows.py (dlt loaders + SQLMesh runs). Needs PREFECT_API_URL
+# and DATABASE_URL set as env vars.
 FROM python:3.13-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
@@ -19,5 +20,5 @@ RUN uv sync --frozen --group dev
 
 COPY . .
 
-ENTRYPOINT ["uv", "run"]
-CMD ["prefect", "worker", "start", "--pool", "baseball-etl"]
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]

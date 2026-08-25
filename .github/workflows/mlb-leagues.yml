@@ -18,10 +18,13 @@ on:
           database for this run.
         required: false
         type: string
-  schedule:
-    # League reference data rarely changes mid-season, so a monthly check
-    # for the current season is enough to catch it.
-    - cron: "0 12 1 * *"
+  # Disabled: scheduling moved to the "mlb-leagues" Prefect deployment
+  # (see prefect.yaml). Kept here, workflow_dispatch-only, as a manual
+  # fallback.
+  # schedule:
+  #   # League reference data rarely changes mid-season, so a monthly check
+  #   # for the current season is enough to catch it.
+  #   - cron: "0 12 1 * *"
 
 jobs:
   load:

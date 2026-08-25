@@ -33,12 +33,15 @@ on:
           database for this run.
         required: false
         type: string
-  schedule:
-    # Daily during the MLB season. Re-fetches a trailing 7-day window (see
-    # START_DATE default below) rather than the whole season, since a merge
-    # write disposition makes re-pulling those days idempotent while still
-    # catching late score/status corrections.
-    - cron: "0 12 * 3-11 *"
+  # Disabled: scheduling moved to the "mlb-playbyplay" Prefect deployment
+  # (see prefect.yaml). Kept here, workflow_dispatch-only, as a manual
+  # fallback.
+  # schedule:
+  #   # Daily during the MLB season. Re-fetches a trailing 7-day window (see
+  #   # START_DATE default below) rather than the whole season, since a merge
+  #   # write disposition makes re-pulling those days idempotent while still
+  #   # catching late score/status corrections.
+  #   - cron: "0 12 * 3-11 *"
 
 jobs:
   load:

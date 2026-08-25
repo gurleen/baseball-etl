@@ -18,10 +18,12 @@ on:
           database for this run.
         required: false
         type: string
-  schedule:
-    # Venue reference data (new ballparks) rarely changes mid-season, so a
-    # monthly check for the current season is enough to catch it.
-    - cron: "0 12 1 * *"
+  # Disabled: scheduling moved to the "mlb-venues" Prefect deployment (see
+  # prefect.yaml). Kept here, workflow_dispatch-only, as a manual fallback.
+  # schedule:
+  #   # Venue reference data (new ballparks) rarely changes mid-season, so a
+  #   # monthly check for the current season is enough to catch it.
+  #   - cron: "0 12 1 * *"
 
 jobs:
   load:

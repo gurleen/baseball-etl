@@ -12,9 +12,12 @@ on:
           database for this run.
         required: false
         type: string
-  schedule:
-    # The sport list (MLB, AAA, AA, etc.) essentially never changes.
-    - cron: "0 12 1 1 *"
+  # Disabled: scheduling moved to the "mlb-sports" Prefect deployment
+  # (see prefect.yaml). Kept here, workflow_dispatch-only, as a manual
+  # fallback.
+  # schedule:
+  #   # The sport list (MLB, AAA, AA, etc.) essentially never changes.
+  #   - cron: "0 12 1 1 *"
 
 jobs:
   load:

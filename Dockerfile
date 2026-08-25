@@ -11,7 +11,8 @@ WORKDIR /app
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PREFECT_LOGGING_EXTRA_LOGGERS=baseball_etl
 
 # Install deps first (incl. the dev group, since sqlmesh lives there) so this
 # layer is cached across code-only changes.

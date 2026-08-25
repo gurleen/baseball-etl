@@ -6,8 +6,9 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from prefect import flow, task
+from prefect import flow, get_run_logger, task
 
+from baseball_etl import logging_bridge
 from baseball_etl.pipeline import (
     run_chadwick_register,
     run_fangraphs_guts,
@@ -22,6 +23,8 @@ from baseball_etl.pipeline import (
     run_retrosheet_playbyplay,
     run_statcast,
 )
+
+logging_bridge.install()
 
 
 def _parse_seasons(spec: str | None) -> list[int] | None:
@@ -44,7 +47,7 @@ def _days_ago(days: int) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_games(
     season: int | None = None,
     game_types: str = "R",
@@ -54,7 +57,7 @@ def load_mlb_games(
     run_mlb_games(season=season, game_types=game_types, start_date=start_date, end_date=end_date)
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_playbyplay(
     season: int | None = None,
     game_types: str = "R",
@@ -64,7 +67,7 @@ def load_mlb_playbyplay(
     run_mlb_playbyplay(season=season, game_types=game_types, start_date=start_date, end_date=end_date)
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_statcast(
     season: int | None = None,
     game_types: str = "R",
@@ -74,37 +77,37 @@ def load_statcast(
     run_statcast(season=season, game_types=game_types, start_date=start_date, end_date=end_date)
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_teams(seasons: str | None = None) -> None:
     run_mlb_teams(_parse_seasons(seasons))
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_sports() -> None:
     run_mlb_sports()
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_leagues(seasons: str | None = None) -> None:
     run_mlb_leagues(_parse_seasons(seasons))
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_divisions(seasons: str | None = None) -> None:
     run_mlb_divisions(_parse_seasons(seasons))
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_mlb_venues(seasons: str | None = None) -> None:
     run_mlb_venues(_parse_seasons(seasons))
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_chadwick_register() -> None:
     run_chadwick_register()
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_fangraphs_guts(path: Path | None = None) -> None:
     if path is not None:
         run_fangraphs_guts(path)
@@ -112,7 +115,7 @@ def load_fangraphs_guts(path: Path | None = None) -> None:
         run_fangraphs_guts()
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_fangraphs_park_factors(path: Path | None = None) -> None:
     if path is not None:
         run_fangraphs_park_factors(path)
@@ -120,22 +123,29 @@ def load_fangraphs_park_factors(path: Path | None = None) -> None:
         run_fangraphs_park_factors()
 
 
-@task(retries=2, retry_delay_seconds=60)
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
 def load_retrosheet_playbyplay(years: str) -> None:
     run_retrosheet_playbyplay(_parse_seasons(years))
 
 
+def _run_and_log(args: list[str]) -> None:
+    run_logger = get_run_logger()
+    result = subprocess.run(args, capture_output=True, text=True)
+    if result.stdout:
+        run_logger.info(result.stdout)
+    if result.stderr:
+        run_logger.info(result.stderr)
+    result.check_returncode()
+
+
 @task
 def sqlmesh_run() -> None:
-    subprocess.run(["uv", "run", "sqlmesh", "--paths", "transform", "run"], check=True)
+    _run_and_log(["uv", "run", "sqlmesh", "--paths", "transform", "run"])
 
 
 @task
 def sqlmesh_plan_auto_apply() -> None:
-    subprocess.run(
-        ["uv", "run", "sqlmesh", "--paths", "transform", "plan", "--auto-apply"],
-        check=True,
-    )
+    _run_and_log(["uv", "run", "sqlmesh", "--paths", "transform", "plan", "--auto-apply"])
 
 
 @flow(name="mlb-games")

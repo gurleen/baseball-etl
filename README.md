@@ -48,3 +48,30 @@ New raw tables can be scaffolded into staging models with:
 ```sh
 uv run sqlmesh --paths transform init -t dlt --dlt-pipeline <pipeline_name> postgres
 ```
+
+## Scheduling with Prefect
+
+Scheduled/manual runs are orchestrated by [Prefect](https://docs.prefect.io/)
+instead of GitHub Actions. `baseball_etl/flows.py` wraps the same `run_*()`
+pipeline functions and `sqlmesh` commands used above as Prefect tasks/flows
+(one flow per prior workflow); `prefect.yaml` defines a deployment per flow,
+with schedules matching the old `schedule.cron` entries.
+
+Run a flow directly, ad hoc:
+
+```sh
+uv run python -c "from baseball_etl.flows import mlb_games_flow; mlb_games_flow()"
+```
+
+Register all deployments against the `baseball-etl` work pool and run a
+worker to poll it:
+
+```sh
+uv run prefect work-pool create --type process baseball-etl   # once
+uv run prefect deploy --all
+uv run prefect worker start --pool baseball-etl
+```
+
+`DATABASE_URL` is read from the environment the same way it is for `main.py`
+and `sqlmesh` — set it as a Prefect Secret block or as an env var on the
+worker's host.

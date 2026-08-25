@@ -1,10 +1,7 @@
-# Ad-hoc runner image for baseball-etl cron jobs (dlt loaders + SQLMesh runs).
-#
-# Not a long-running service: Coolify spins up a container per scheduled job,
-# runs a command, and tears it down. Entrypoint is `uv run`, so a Coolify cron
-# job's "command" is just the args you'd normally pass after that, e.g.:
-#   main.py mlb-games --game-types R
-#   sqlmesh --paths transform run
+# Prefect worker image for baseball-etl: a persistent Coolify service running
+# this image polls the "baseball-etl" work pool and executes the scheduled/
+# manual flows in baseball_etl/flows.py (dlt loaders + SQLMesh runs). Needs
+# PREFECT_API_URL and DATABASE_URL set as env vars.
 FROM python:3.13-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
@@ -23,4 +20,4 @@ RUN uv sync --frozen --group dev
 COPY . .
 
 ENTRYPOINT ["uv", "run"]
-CMD ["main.py", "--help"]
+CMD ["prefect", "worker", "start", "--pool", "baseball-etl"]

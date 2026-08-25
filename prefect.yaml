@@ -1,0 +1,134 @@
+# Prefect deployment definitions for baseball-etl. Register all of these
+# against a work pool with:
+#   uv run prefect deploy --all
+#
+# Every deployment uses the "baseball-etl" work pool (a `process` pool is
+# enough for a single self-hosted worker) — create it once with:
+#   uv run prefect work-pool create --type process baseball-etl
+# and run a worker for it with:
+#   uv run prefect worker start --pool baseball-etl
+#
+# Schedules mirror the `schedule.cron` entries in .github/workflows/*.yml.
+# Flows with no schedule below were `workflow_dispatch`-only there too and
+# stay manual-trigger-only here.
+
+name: baseball-etl
+prefect-version: 3.8.4
+
+build: null
+push: null
+
+# No pull step: the worker (Docker image or local checkout, see the
+# Dockerfile) already has this repo at its working directory, and flows
+# just import baseball_etl.pipeline from there.
+pull: null
+
+deployments:
+  - name: mlb-games
+    entrypoint: baseball_etl/flows.py:mlb_games_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 * 3-11 *"
+        timezone: UTC
+    parameters:
+      game_types: "R"
+
+  - name: mlb-playbyplay
+    entrypoint: baseball_etl/flows.py:mlb_playbyplay_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 * 3-11 *"
+        timezone: UTC
+    parameters:
+      game_types: "R"
+
+  - name: mlb-playbyplay-backfill
+    entrypoint: baseball_etl/flows.py:mlb_playbyplay_backfill_flow
+    work_pool:
+      name: baseball-etl
+    parameters:
+      game_types: "R"
+
+  - name: statcast
+    entrypoint: baseball_etl/flows.py:statcast_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 13 * 3-11 *"
+        timezone: UTC
+    parameters:
+      game_types: "R"
+
+  - name: statcast-backfill
+    entrypoint: baseball_etl/flows.py:statcast_backfill_flow
+    work_pool:
+      name: baseball-etl
+    parameters:
+      game_types: "R"
+
+  - name: mlb-teams
+    entrypoint: baseball_etl/flows.py:mlb_teams_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 1 * *"
+        timezone: UTC
+
+  - name: mlb-sports
+    entrypoint: baseball_etl/flows.py:mlb_sports_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 1 1 *"
+        timezone: UTC
+
+  - name: mlb-leagues
+    entrypoint: baseball_etl/flows.py:mlb_leagues_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 1 * *"
+        timezone: UTC
+
+  - name: mlb-divisions
+    entrypoint: baseball_etl/flows.py:mlb_divisions_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 1 * *"
+        timezone: UTC
+
+  - name: mlb-venues
+    entrypoint: baseball_etl/flows.py:mlb_venues_flow
+    work_pool:
+      name: baseball-etl
+    schedules:
+      - cron: "0 12 1 * *"
+        timezone: UTC
+
+  - name: chadwick-register
+    entrypoint: baseball_etl/flows.py:chadwick_register_flow
+    work_pool:
+      name: baseball-etl
+
+  - name: fangraphs-guts
+    entrypoint: baseball_etl/flows.py:fangraphs_guts_flow
+    work_pool:
+      name: baseball-etl
+
+  - name: fangraphs-park-factors
+    entrypoint: baseball_etl/flows.py:fangraphs_park_factors_flow
+    work_pool:
+      name: baseball-etl
+
+  - name: retrosheet-playbyplay
+    entrypoint: baseball_etl/flows.py:retrosheet_playbyplay_flow
+    work_pool:
+      name: baseball-etl
+
+  - name: sqlmesh-plan
+    entrypoint: baseball_etl/flows.py:sqlmesh_plan_flow
+    work_pool:
+      name: baseball-etl

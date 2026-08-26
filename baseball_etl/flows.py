@@ -9,6 +9,7 @@ from pathlib import Path
 from prefect import flow, get_run_logger, task
 
 from baseball_etl import logging_bridge
+from baseball_etl.notifications import notify_failure
 from baseball_etl.pipeline import (
     run_chadwick_register,
     run_fangraphs_guts,
@@ -165,7 +166,7 @@ def sqlmesh_plan_auto_apply() -> None:
     _run_and_log(["uv", "run", "sqlmesh", "--paths", "transform", "plan", "--auto-apply"])
 
 
-@flow(name="mlb-games")
+@flow(name="mlb-games", on_failure=[notify_failure])
 def mlb_games_flow(
     season: int | None = None,
     game_types: str = "R",
@@ -175,7 +176,7 @@ def mlb_games_flow(
     load_mlb_games(season=season, game_types=game_types, start_date=start_date, end_date=end_date)
 
 
-@flow(name="mlb-playbyplay")
+@flow(name="mlb-playbyplay", on_failure=[notify_failure])
 def mlb_playbyplay_flow(
     season: int | None = None,
     game_types: str = "R",
@@ -188,7 +189,7 @@ def mlb_playbyplay_flow(
     sqlmesh_run()
 
 
-@flow(name="mlb-playbyplay-backfill")
+@flow(name="mlb-playbyplay-backfill", on_failure=[notify_failure])
 def mlb_playbyplay_backfill_flow(
     season: int | None = None,
     game_types: str = "R",
@@ -198,7 +199,7 @@ def mlb_playbyplay_backfill_flow(
     sqlmesh_run()
 
 
-@flow(name="statcast")
+@flow(name="statcast", on_failure=[notify_failure])
 def statcast_flow(
     season: int | None = None,
     game_types: str = "R",
@@ -211,7 +212,7 @@ def statcast_flow(
     sqlmesh_run()
 
 
-@flow(name="statcast-backfill")
+@flow(name="statcast-backfill", on_failure=[notify_failure])
 def statcast_backfill_flow(
     season: int | None = None,
     game_types: str = "R",
@@ -223,51 +224,51 @@ def statcast_backfill_flow(
     sqlmesh_run()
 
 
-@flow(name="mlb-teams")
+@flow(name="mlb-teams", on_failure=[notify_failure])
 def mlb_teams_flow(seasons: str | None = None) -> None:
     load_mlb_teams(seasons=seasons)
 
 
-@flow(name="mlb-sports")
+@flow(name="mlb-sports", on_failure=[notify_failure])
 def mlb_sports_flow() -> None:
     load_mlb_sports()
 
 
-@flow(name="mlb-leagues")
+@flow(name="mlb-leagues", on_failure=[notify_failure])
 def mlb_leagues_flow(seasons: str | None = None) -> None:
     load_mlb_leagues(seasons=seasons)
 
 
-@flow(name="mlb-divisions")
+@flow(name="mlb-divisions", on_failure=[notify_failure])
 def mlb_divisions_flow(seasons: str | None = None) -> None:
     load_mlb_divisions(seasons=seasons)
 
 
-@flow(name="mlb-venues")
+@flow(name="mlb-venues", on_failure=[notify_failure])
 def mlb_venues_flow(seasons: str | None = None) -> None:
     load_mlb_venues(seasons=seasons)
 
 
-@flow(name="chadwick-register")
+@flow(name="chadwick-register", on_failure=[notify_failure])
 def chadwick_register_flow() -> None:
     load_chadwick_register()
 
 
-@flow(name="fangraphs-guts")
+@flow(name="fangraphs-guts", on_failure=[notify_failure])
 def fangraphs_guts_flow(path: str | None = None) -> None:
     load_fangraphs_guts(Path(path) if path else None)
 
 
-@flow(name="fangraphs-park-factors")
+@flow(name="fangraphs-park-factors", on_failure=[notify_failure])
 def fangraphs_park_factors_flow(path: str | None = None) -> None:
     load_fangraphs_park_factors(Path(path) if path else None)
 
 
-@flow(name="retrosheet-playbyplay")
+@flow(name="retrosheet-playbyplay", on_failure=[notify_failure])
 def retrosheet_playbyplay_flow(years: str) -> None:
     load_retrosheet_playbyplay(years)
 
 
-@flow(name="sqlmesh-plan")
+@flow(name="sqlmesh-plan", on_failure=[notify_failure])
 def sqlmesh_plan_flow() -> None:
     sqlmesh_plan_auto_apply()

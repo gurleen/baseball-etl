@@ -75,3 +75,18 @@ uv run prefect worker start --pool baseball-etl
 `DATABASE_URL` is read from the environment the same way it is for `main.py`
 and `sqlmesh` — set it as a Prefect Secret block or as an env var on the
 worker's host.
+
+### Failure notifications (Pushover)
+
+Every flow in `flows.py` has an `on_failure` hook (`notify_failure` in
+`baseball_etl/notifications.py`) that posts to
+[Pushover](https://pushover.net) via a Prefect `CustomWebhookNotificationBlock`.
+Create/update that block once (and again whenever the token/user changes):
+
+```sh
+PUSHOVER_TOKEN=... PUSHOVER_USER=... uv run python -m baseball_etl.notifications
+```
+
+The block config (including the token/user, stored as block secrets) lives
+server-side in Prefect, not in this repo — the command above just registers
+it against whichever `PREFECT_API_URL` the environment points at.

@@ -1,10 +1,11 @@
 """dlt source for FanGraphs' park factors by team/season.
 
 FanGraphs blocks scrapers, so this data can't be fetched from an API like
-the other sources — instead it's a CSV manually downloaded from
-https://www.fangraphs.com/guts.aspx?type=pf&season=2025&teamid=0&
-and committed to the repo at `data/fangraphs_park_factors.csv`. To refresh:
-download the updated CSV from that page, overwrite
+the other sources — instead it's all-time, per-team CSVs manually
+downloaded from https://www.fangraphs.com/guts.aspx?type=pf (one team at a
+time, since FanGraphs doesn't offer a combined all-time/all-team export),
+combined into `data/fangraphs_park_factors.csv`. To refresh: download the
+updated CSVs, combine them (concatenate rows, keep one header), overwrite
 `data/fangraphs_park_factors.csv`, commit, and re-run this loader.
 """
 

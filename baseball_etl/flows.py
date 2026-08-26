@@ -162,8 +162,11 @@ def sqlmesh_run() -> None:
 
 
 @task
-def sqlmesh_plan_auto_apply() -> None:
-    _run_and_log(["uv", "run", "sqlmesh", "--paths", "transform", "plan", "--auto-apply"])
+def sqlmesh_plan_auto_apply(force: bool = False) -> None:
+    args = ["uv", "run", "sqlmesh", "--paths", "transform", "plan", "--auto-apply"]
+    if force:
+        args += ["--restate-model", "*.*"]
+    _run_and_log(args)
 
 
 @flow(name="mlb-games", on_failure=[notify_failure])
@@ -270,5 +273,5 @@ def retrosheet_playbyplay_flow(years: str) -> None:
 
 
 @flow(name="sqlmesh-plan", on_failure=[notify_failure])
-def sqlmesh_plan_flow() -> None:
-    sqlmesh_plan_auto_apply()
+def sqlmesh_plan_flow(force: bool = False) -> None:
+    sqlmesh_plan_auto_apply(force=force)

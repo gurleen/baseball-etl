@@ -32,7 +32,7 @@ than one at a time.
 
 import datetime as dt
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Iterator, Optional
+from typing import Iterable, Iterator, Optional
 
 import dlt
 import requests
@@ -85,12 +85,26 @@ def _fetch_game_feed(game_pk: int) -> dict:
     return response.json()
 
 
+def fetch_game_pks(
+    season: Optional[int] = None,
+    game_types: str = "R",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> list[int]:
+    """Resolve the game_pks for a season/date range via the schedule endpoint,
+    without fetching any per-game feeds. Lets callers split a season's worth
+    of games into smaller batches before running the pipeline."""
+    resolved_season = season or _current_season()
+    return list(_fetch_game_pks(resolved_season, game_types, start_date, end_date))
+
+
 @dlt.source(name="statcast")
 def statcast(
     season: Optional[int] = None,
     game_types: str = "R",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    game_pks: Optional[Iterable[int]] = None,
 ):
     """Statcast pitch-tracking and batted-ball data for a season, defaulting
     to the current one.
@@ -99,6 +113,8 @@ def statcast(
     season, "F,D,L,W" for postseason rounds, etc). `start_date`/`end_date`
     (YYYY-MM-DD) narrow the schedule lookup, useful for smaller incremental
     runs during the current season rather than refetching every game.
+    `game_pks`, if given, is fetched directly instead of resolving the
+    schedule, e.g. for running a season in memory-bounded batches.
     """
     resolved_season = season or _current_season()
 
@@ -106,14 +122,20 @@ def statcast(
         name="statcast_pitches", write_disposition="merge", primary_key="play_id"
     )
     def statcast_pitches() -> Iterator[dict]:
-        game_pks = list(_fetch_game_pks(resolved_season, game_types, start_date, end_date))
+        if game_pks is not None:
+            resolved_game_pks = list(game_pks)
+        else:
+            resolved_game_pks = list(
+                _fetch_game_pks(resolved_season, game_types, start_date, end_date)
+            )
         games_processed = 0
         pitches_yielded = 0
         balls_yielded = 0
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {
-                executor.submit(_fetch_game_feed, game_pk): game_pk for game_pk in game_pks
+                executor.submit(_fetch_game_feed, game_pk): game_pk
+                for game_pk in resolved_game_pks
             }
             for future in as_completed(futures):
                 game_pk = futures[future]

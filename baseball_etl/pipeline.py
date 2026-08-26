@@ -146,13 +146,16 @@ def run_statcast(
     game_types: str = "R",
     start_date: str | None = None,
     end_date: str | None = None,
+    game_pks: Iterable[int] | None = None,
 ) -> None:
+    game_pks = list(game_pks) if game_pks is not None else None
     logger.info(
-        "Starting statcast run: season={} game_types={} start_date={} end_date={}",
+        "Starting statcast run: season={} game_types={} start_date={} end_date={} game_pks={}",
         season,
         game_types,
         start_date,
         end_date,
+        f"{len(game_pks)} explicit" if game_pks is not None else None,
     )
     started = time.monotonic()
     pipeline = _pipeline("statcast")
@@ -162,6 +165,7 @@ def run_statcast(
             game_types=game_types,
             start_date=start_date,
             end_date=end_date,
+            game_pks=game_pks,
         )
     )
     elapsed = time.monotonic() - started

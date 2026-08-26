@@ -23,8 +23,20 @@ from baseball_etl.pipeline import (
     run_retrosheet_playbyplay,
     run_statcast,
 )
+from baseball_etl.sources.statcast import fetch_game_pks
 
 logging_bridge.install()
+
+# Fetching a full season's worth of games (~2400) in one dlt extraction run
+# holds every game's feed data in memory at once, which has crashed the
+# backfill on constrained workers. Splitting into batches this size and
+# running the pipeline separately per batch keeps peak memory bounded and
+# lets earlier batches' data get garbage-collected before the next one starts.
+STATCAST_BATCH_SIZE = 300
+
+
+def _chunk(items: list[int], size: int) -> list[list[int]]:
+    return [items[i : i + size] for i in range(0, len(items), size)]
 
 
 def _parse_seasons(spec: str | None) -> list[int] | None:
@@ -75,6 +87,11 @@ def load_statcast(
     end_date: str | None = None,
 ) -> None:
     run_statcast(season=season, game_types=game_types, start_date=start_date, end_date=end_date)
+
+
+@task(retries=2, retry_delay_seconds=60, log_prints=True)
+def load_statcast_batch(game_pks: list[int]) -> None:
+    run_statcast(game_pks=game_pks)
 
 
 @task(retries=2, retry_delay_seconds=60, log_prints=True)
@@ -200,7 +217,9 @@ def statcast_backfill_flow(
     game_types: str = "R",
 ) -> None:
     end_date = _days_ago(1)
-    load_statcast(season=season, game_types=game_types, end_date=end_date)
+    game_pks = fetch_game_pks(season=season, game_types=game_types, end_date=end_date)
+    for batch in _chunk(game_pks, STATCAST_BATCH_SIZE):
+        load_statcast_batch(batch)
     sqlmesh_run()
 
 

@@ -11,6 +11,8 @@ uv run prefect deploy --all
 # laptop. Skipped if the env vars aren't set (e.g. Pushover not configured).
 if [ -n "$PUSHOVER_TOKEN" ] && [ -n "$PUSHOVER_USER" ]; then
     uv run python -m baseball_etl.notifications
+else
+    echo "PUSHOVER_TOKEN/PUSHOVER_USER not set, skipping Pushover block registration."
 fi
 
 exec uv run prefect worker start --pool baseball-etl

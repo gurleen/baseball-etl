@@ -38,6 +38,7 @@ def register_pushover_block() -> None:
         },
     )
     block.save(name=PUSHOVER_BLOCK_NAME, overwrite=True)
+    print(f"Registered {PUSHOVER_BLOCK_NAME!r} CustomWebhookNotificationBlock.")
 
 
 def notify_failure(flow: Flow, flow_run: FlowRun, state: State) -> None:

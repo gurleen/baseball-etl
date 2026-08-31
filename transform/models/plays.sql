@@ -20,6 +20,8 @@ WITH unioned AS (
     r.balls::SMALLINT AS balls,
     r.strikes::SMALLINT AS strikes,
     r.outs_post::SMALLINT AS outs_after,
+    r.bathand AS batter_hand,
+    r.pithand AS pitcher_hand,
     CASE
       WHEN r.hr = '1' THEN 'home_run'
       WHEN r.triple = '1' THEN 'triple'
@@ -64,6 +66,8 @@ WITH unioned AS (
     m.count__balls::SMALLINT AS balls,
     m.count__strikes::SMALLINT AS strikes,
     m.count__outs::SMALLINT AS outs_after,
+    m.matchup__bat_side__code AS batter_hand,
+    m.matchup__pitch_hand__code AS pitcher_hand,
     CASE m.result__event_type
       WHEN 'single' THEN 'single'
       WHEN 'double' THEN 'double'
@@ -116,6 +120,8 @@ SELECT
   balls,
   strikes,
   outs_after,
+  batter_hand,
+  pitcher_hand,
   event_category = 'single' AS is_single,
   event_category = 'double' AS is_double,
   event_category = 'triple' AS is_triple,

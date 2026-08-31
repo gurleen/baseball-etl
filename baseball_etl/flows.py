@@ -275,3 +275,8 @@ def retrosheet_playbyplay_flow(years: str) -> None:
 @flow(name="sqlmesh-plan", on_failure=[notify_failure])
 def sqlmesh_plan_flow(force: bool = False) -> None:
     sqlmesh_plan_auto_apply(force=force)
+    # `plan --auto-apply` only backfills models on a diff (new/changed
+    # model), so run afterwards to refresh data-quality models like
+    # public.game_data_completeness/public.season_data_completeness even
+    # when nothing else changed.
+    sqlmesh_run()

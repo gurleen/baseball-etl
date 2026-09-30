@@ -18,7 +18,7 @@ batter_games_played AS (
     p.batter_pk,
     p.season,
     MAX(cgp.games_played) AS games_played
-  FROM (SELECT DISTINCT batter_pk, season, batting_club_pk FROM public.plays WHERE batter_pk IS NOT NULL) AS p
+  FROM (SELECT DISTINCT batter_pk, season, batting_club_pk FROM public.plays WHERE batter_pk IS NOT NULL AND game_type = 'R') AS p
   JOIN club_games_played AS cgp
     ON cgp.club_pk = p.batting_club_pk AND cgp.season = p.season
   GROUP BY p.batter_pk, p.season
@@ -40,7 +40,7 @@ counts AS (
     COUNT(*) FILTER (WHERE is_sacrifice_bunt)::INTEGER AS sh,
     COUNT(*) FILTER (WHERE is_catcher_interference)::INTEGER AS ci
   FROM public.plays
-  WHERE batter_pk IS NOT NULL
+  WHERE batter_pk IS NOT NULL AND game_type = 'R'
   GROUP BY batter_pk, season
 ),
 totals AS (
@@ -76,7 +76,7 @@ primary_club AS (
       batting_club_pk,
       ROW_NUMBER() OVER (PARTITION BY batter_pk, season ORDER BY COUNT(*) DESC) AS rn
     FROM public.plays
-    WHERE batter_pk IS NOT NULL
+    WHERE batter_pk IS NOT NULL AND game_type = 'R'
     GROUP BY batter_pk, season, batting_club_pk
   ) AS ranked
   WHERE rn = 1
@@ -102,7 +102,7 @@ league_batting AS (
   FROM public.plays AS pl
   JOIN public.clubs_history AS ch
     ON ch.club_pk = pl.batting_club_pk AND ch.season = pl.season
-  WHERE pl.batter_pk IS NOT NULL
+  WHERE pl.batter_pk IS NOT NULL AND pl.game_type = 'R'
   GROUP BY ch.league_pk, pl.season
 ),
 league_runs AS (

@@ -10,6 +10,14 @@ WITH unioned AS (
     r.gid AS game_id,
     r.pn::INT AS play_seq,
     r.season::SMALLINT AS season,
+    CASE r.gametype
+      WHEN 'regular' THEN 'R'
+      WHEN 'wildcard' THEN 'F'
+      WHEN 'divisionseries' THEN 'D'
+      WHEN 'lcs' THEN 'L'
+      WHEN 'worldseries' THEN 'W'
+      WHEN 'allstar' THEN 'A'
+    END AS game_type,
     TO_DATE(r.date, 'YYYYMMDD') AS game_date,
     r.inning::SMALLINT AS inning,
     CASE r.top_bot WHEN '0' THEN 'top' WHEN '1' THEN 'bottom' END AS half_inning,
@@ -56,6 +64,7 @@ WITH unioned AS (
     m.game_pk::TEXT AS game_id,
     m.at_bat_index AS play_seq,
     g.season AS season,
+    g.game_type AS game_type,
     g.official_date AS game_date,
     m.about__inning::SMALLINT AS inning,
     m.about__half_inning AS half_inning,
@@ -110,6 +119,7 @@ SELECT
   game_id,
   play_seq,
   season,
+  game_type,
   game_date,
   inning,
   half_inning,

@@ -11,6 +11,14 @@ WITH unioned AS (
     r.pn::INT AS play_seq,
     'b' AS slot,
     r.season::SMALLINT AS season,
+    CASE r.gametype
+      WHEN 'regular' THEN 'R'
+      WHEN 'wildcard' THEN 'F'
+      WHEN 'divisionseries' THEN 'D'
+      WHEN 'lcs' THEN 'L'
+      WHEN 'worldseries' THEN 'W'
+      WHEN 'allstar' THEN 'A'
+    END AS game_type,
     p.pk AS pitcher_pk,
     (r.ur_b <> '1') AS is_earned
   FROM raw.plays AS r
@@ -25,6 +33,14 @@ WITH unioned AS (
     r.pn::INT AS play_seq,
     '1' AS slot,
     r.season::SMALLINT AS season,
+    CASE r.gametype
+      WHEN 'regular' THEN 'R'
+      WHEN 'wildcard' THEN 'F'
+      WHEN 'divisionseries' THEN 'D'
+      WHEN 'lcs' THEN 'L'
+      WHEN 'worldseries' THEN 'W'
+      WHEN 'allstar' THEN 'A'
+    END AS game_type,
     p.pk AS pitcher_pk,
     (r.ur1 <> '1') AS is_earned
   FROM raw.plays AS r
@@ -39,6 +55,14 @@ WITH unioned AS (
     r.pn::INT AS play_seq,
     '2' AS slot,
     r.season::SMALLINT AS season,
+    CASE r.gametype
+      WHEN 'regular' THEN 'R'
+      WHEN 'wildcard' THEN 'F'
+      WHEN 'divisionseries' THEN 'D'
+      WHEN 'lcs' THEN 'L'
+      WHEN 'worldseries' THEN 'W'
+      WHEN 'allstar' THEN 'A'
+    END AS game_type,
     p.pk AS pitcher_pk,
     (r.ur2 <> '1') AS is_earned
   FROM raw.plays AS r
@@ -53,6 +77,14 @@ WITH unioned AS (
     r.pn::INT AS play_seq,
     '3' AS slot,
     r.season::SMALLINT AS season,
+    CASE r.gametype
+      WHEN 'regular' THEN 'R'
+      WHEN 'wildcard' THEN 'F'
+      WHEN 'divisionseries' THEN 'D'
+      WHEN 'lcs' THEN 'L'
+      WHEN 'worldseries' THEN 'W'
+      WHEN 'allstar' THEN 'A'
+    END AS game_type,
     p.pk AS pitcher_pk,
     (r.ur3 <> '1') AS is_earned
   FROM raw.plays AS r
@@ -67,6 +99,7 @@ WITH unioned AS (
     m.at_bat_index AS play_seq,
     rn._dlt_list_idx::TEXT AS slot,
     g.season AS season,
+    g.game_type AS game_type,
     rn.details__responsible_pitcher__id AS pitcher_pk,
     rn.details__earned AS is_earned
   FROM raw.mlb_plays__runners AS rn
@@ -81,6 +114,7 @@ SELECT
   game_id,
   play_seq,
   season,
+  game_type,
   pitcher_pk,
   is_earned
 FROM unioned

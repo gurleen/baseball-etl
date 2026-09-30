@@ -18,7 +18,7 @@ pitcher_games_played AS (
     p.pitcher_pk,
     p.season,
     MAX(cgp.games_played) AS games_played
-  FROM (SELECT DISTINCT pitcher_pk, season, pitching_club_pk FROM public.plays WHERE pitcher_pk IS NOT NULL) AS p
+  FROM (SELECT DISTINCT pitcher_pk, season, pitching_club_pk FROM public.plays WHERE pitcher_pk IS NOT NULL AND game_type = 'R') AS p
   JOIN club_games_played AS cgp
     ON cgp.club_pk = p.pitching_club_pk AND cgp.season = p.season
   GROUP BY p.pitcher_pk, p.season
@@ -41,7 +41,7 @@ counts AS (
     COUNT(*) FILTER (WHERE is_sacrifice_bunt)::INTEGER AS sh,
     COUNT(*) FILTER (WHERE is_catcher_interference)::INTEGER AS ci
   FROM public.plays
-  WHERE pitcher_pk IS NOT NULL
+  WHERE pitcher_pk IS NOT NULL AND game_type = 'R'
   GROUP BY pitcher_pk, season
 ),
 runs_charged AS (
@@ -51,6 +51,7 @@ runs_charged AS (
     COUNT(*)::INTEGER AS runs,
     COUNT(*) FILTER (WHERE is_earned)::INTEGER AS earned_runs
   FROM public.pitcher_runs_charged
+  WHERE game_type = 'R'
   GROUP BY pitcher_pk, season
 ),
 totals AS (

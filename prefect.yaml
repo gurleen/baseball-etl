@@ -59,7 +59,7 @@ deployments:
       - cron: "0 13 * 3-11 *"
         timezone: UTC
     parameters:
-      game_types: "R"
+      game_types: "R,F,D,L,W"
 
   - name: statcast-backfill
     entrypoint: baseball_etl/flows.py:statcast_backfill_flow
